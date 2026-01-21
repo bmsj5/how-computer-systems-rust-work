@@ -1,0 +1,72 @@
+[package]
+name = "computer-systems-rust"
+version = "0.1.0"
+edition = "2024"
+description = "Educational repository explaining how computer systems work through Rust code examples"
+authors = ["Yahor Darashuk"]
+repository = "https://github.com/bmsj5/how-computer-systems-rust-work"
+keywords = ["education", "systems", "rust", "computer-science", "low-level"]
+categories = ["education", "rust-patterns"]
+license = "Apache-2.0"
+
+[dependencies]
+tokio = { version = "1", features = ["full"] }
+num_cpus = "1.16"
+
+# Educational demos - organized by topic
+[[bin]]
+name = "hardware-fundamentals"
+path = "src/bin/hardware_fundamentals.rs"
+
+[[bin]]
+name = "memory-management"
+path = "src/bin/memory_management.rs"
+
+[[bin]]
+name = "compilation-optimization"
+path = "src/bin/compilation_optimization.rs"
+
+[[bin]]
+name = "rust-language-features"
+path = "src/bin/rust_language_features.rs"
+
+[[bin]]
+name = "operating-system-concepts"
+path = "src/bin/operating_system_concepts.rs"
+
+# Individual demo binaries
+[[bin]]
+name = "cache-line-demo"
+path = "src/bin/cache_line_demo.rs"
+
+[[bin]]
+name = "iterator-demo"
+path = "src/bin/iterator_demo.rs"
+
+[[bin]]
+name = "register-demo"
+path = "src/bin/register_demo.rs"
+
+[[bin]]
+name = "memory-access-demo"
+path = "src/bin/memory_access_demo.rs"
+
+[[bin]]
+name = "array-indexing-demo"
+path = "src/bin/array_indexing_demo.rs"
+
+[[bin]]
+name = "optimization-demo"
+path = "src/bin/optimization_demo.rs"
+
+[[bin]]
+name = "optimization-levels-demo"
+path = "src/bin/optimization_levels_demo.rs"
+
+[[bin]]
+name = "pointer-safety-demo"
+path = "src/bin/pointer_safety_demo.rs"
+
+[[bin]]
+name = "lru-implementation"
+path = "src/bin/lru_implementation.rs"
