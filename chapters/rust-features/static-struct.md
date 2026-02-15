@@ -1,36 +1,65 @@
-# Static Variables vs Structs: When to Use What
+# Constants vs Static Variables vs Structs: When to Use What
 
 ## Quick Answer
 
-**Use `static` for simple global constants. Use structs for complex data or when you need methods. You can also use `static` with structs for global state.**
+**Use `const` for simple compile-time constants. Use `static` for runtime global state. Use structs for complex data or when you need methods. You can also use `static` with structs for global state.**
 
 ---
 
-## 1. Static Variables - Simple Global Constants
+## 1. Constants - Compile-Time Values
 
-**What:** Global variable that lives for entire program
+**What:** Values known at compile time, no runtime memory allocation
 
 **When to use:**
 - ✅ **Simple values** - Numbers, strings, simple data
-- ✅ **Global constants** - Configuration, constants
+- ✅ **Compile-time constants** - Array sizes, const generics, pattern matching
+- ✅ **Immutable values** - Values that never change
 - ✅ **No methods needed** - Just data
 
 **Example:**
 ```rust
-static GLOBAL_VALUE: i32 = 42;
-static API_URL: &str = "https://api.example.com";
-static MAX_CONNECTIONS: usize = 100;
+const GLOBAL_VALUE: i32 = 42;
+const API_URL: &str = "https://api.example.com";
+const MAX_CONNECTIONS: usize = 100;
 ```
 
 **Advantages:**
-- ✅ Simple
-- ✅ Zero overhead
-- ✅ Compile-time known (if const-like)
+- ✅ Zero runtime overhead
+- ✅ Can be used in const contexts (array sizes, etc.)
+- ✅ Evaluated at compile time
 
 **Limitations:**
 - ❌ Can't have methods
 - ❌ Limited to simple data
 - ❌ Hard to organize related data
+- ❌ No memory address (can't take references)
+
+---
+
+## 1.5. Static Variables - Runtime Global State
+
+**What:** Global variable that lives for entire program with runtime memory allocation
+
+**When to use:**
+- ✅ **Mutable global state** - Need to modify at runtime
+- ✅ **Need a memory address** - When you need `&'static T`
+- ✅ **Global variables** - When const isn't sufficient
+
+**Example:**
+```rust
+static mut COUNTER: i32 = 0;
+static GLOBAL_DATA: std::sync::Mutex<Vec<i32>> = std::sync::Mutex::new(Vec::new());
+```
+
+**Advantages:**
+- ✅ Has a memory address
+- ✅ Can be mutable
+- ✅ Thread-safe options available
+
+**Limitations:**
+- ❌ Runtime memory allocation
+- ❌ More complex than const
+- ❌ Can't be used in const contexts
 
 ---
 
@@ -137,32 +166,72 @@ fn main() {
 
 ## 4. Comparison Table
 
-| Approach | Use Case | Complexity | Methods | Example |
-|----------|----------|------------|---------|---------|
-| **Static variable** | Simple constants | Simple | ❌ No | `static VALUE: i32 = 42;` |
-| **Struct** | Complex data | Medium | ✅ Yes | `struct Config { ... }` |
-| **Static struct** | Global complex state | Complex | ✅ Yes | `static CONFIG: OnceLock<Config> = ...` |
+| Approach | Use Case | Complexity | Methods | Runtime Memory | Example |
+|----------|----------|------------|---------|----------------|---------|
+| **const** | Compile-time constants | Simple | ❌ No | ❌ No | `const VALUE: i32 = 42;` |
+| **static** | Runtime global state | Simple | ❌ No | ✅ Yes | `static VALUE: i32 = 42;` |
+| **Struct** | Complex data | Medium | ✅ Yes | Instance-based | `struct Config { ... }` |
+| **Static struct** | Global complex state | Complex | ✅ Yes | ✅ Yes | `static CONFIG: OnceLock<Config> = ...` |
 
 ---
 
 ## 5. When to Use What
 
-### ✅ Use Static Variables When:
+### ✅ Use Constants When:
 
-**Simple global constants:**
+**Simple compile-time constants:**
 ```rust
-static MAX_SIZE: usize = 1024;
-static API_KEY: &str = "secret-key";
-static DEBUG: bool = true;
+const MAX_SIZE: usize = 1024;
+const API_KEY: &str = "secret-key";
+const DEBUG: bool = true;
 ```
 
 **Configuration values:**
 ```rust
-static PORT: u16 = 8080;
-static HOST: &str = "localhost";
+const PORT: u16 = 8080;
+const HOST: &str = "localhost";
 ```
 
-**This is the simplest approach for simple data!**
+**Array sizes and const generics:**
+```rust
+const BUFFER_SIZE: usize = 1024;
+let buffer: [u8; BUFFER_SIZE] = [0; BUFFER_SIZE]; // ✅ Works with const
+```
+
+**This is the simplest and most efficient approach for simple data!**
+
+---
+
+### ⚠️ Use Static Variables When:
+
+**Mutable global state:**
+```rust
+static mut COUNTER: usize = 0;
+
+// Unsafe access required
+unsafe {
+    COUNTER += 1;
+}
+```
+
+**Global data that needs a memory address:**
+```rust
+static mut GLOBAL_VEC: Vec<i32> = Vec::new();
+
+fn add_to_global(value: i32) {
+    unsafe {
+        GLOBAL_VEC.push(value); // Need address for mutation
+    }
+}
+```
+
+**Thread-safe global state:**
+```rust
+use std::sync::Mutex;
+static GLOBAL_DATA: Mutex<Vec<i32>> = Mutex::new(Vec::new());
+```
+
+**Use static only when const isn't sufficient!**
 
 ---
 
@@ -268,21 +337,21 @@ fn get_logger() -> &'static Logger {
 
 ## 6. Real-World Examples
 
-### Example 1: Simple Configuration (Static Variables)
+### Example 1: Simple Configuration (Constants)
 
 ```rust
-// Simple - use static variables
-static API_URL: &str = "https://api.example.com";
-static TIMEOUT: u64 = 30;
-static MAX_RETRIES: u32 = 3;
+// Simple - use constants
+const API_URL: &str = "https://api.example.com";
+const TIMEOUT: u64 = 30;
+const MAX_RETRIES: u32 = 3;
 
 fn make_request() {
-    // Use static values
+    // Use const values
     println!("Calling {}", API_URL);
 }
 ```
 
-**✅ Use this for simple constants!**
+**✅ Use const for simple constants!**
 
 ---
 
@@ -357,41 +426,49 @@ fn main() {
 ## 7. Summary
 
 **Rule of thumb:**
-1. **Simple constants** → Use `static VALUE: Type = value;`
-2. **Complex data with methods** → Use `struct` (create instances)
-3. **Global complex state** → Use `static STRUCT: OnceLock<Struct> = ...`
+1. **Simple constants** → Use `const VALUE: Type = value;`
+2. **Mutable global state** → Use `static mut VALUE: Type = value;`
+3. **Complex data with methods** → Use `struct` (create instances)
+4. **Global complex state** → Use `static STRUCT: OnceLock<Struct> = ...`
 
 **Your question:**
-- `static GLOBAL_VALUE: i32 = 42;` → ✅ Use for simple constants
+- `const GLOBAL_VALUE: i32 = 42;` → ✅ Use for simple constants
+- `static mut COUNTER: i32 = 0;` → ✅ Use for mutable global state
 - `struct Config { ... }` → ✅ Use for complex data with methods
 - `static CONFIG: OnceLock<Config> = ...` → ✅ Use for global complex state
 
-**Choose based on complexity:**
-- Simple value? → Static variable
-- Complex data? → Struct
+**Choose based on needs:**
+- Compile-time constant? → const
+- Mutable global variable? → static
+- Complex data with methods? → Struct
 - Global complex state? → Static struct
 
 ---
 
 ## 8. Common Patterns
 
-### Pattern 1: Simple Global Constant
+### Pattern 1: Compile-Time Constant
 ```rust
-static MAX_SIZE: usize = 1024;  // ✅ Simple
+const MAX_SIZE: usize = 1024;  // ✅ Zero overhead, compile-time
 ```
 
-### Pattern 2: Global Struct Instance
+### Pattern 2: Mutable Global State
+```rust
+static mut COUNTER: usize = 0;  // ✅ Runtime global state
+```
+
+### Pattern 3: Global Struct Instance
 ```rust
 use std::sync::OnceLock;
 
 struct Config { ... }
-static CONFIG: OnceLock<Config> = OnceLock::new();  // ✅ Complex
+static CONFIG: OnceLock<Config> = OnceLock::new();  // ✅ Complex global state
 ```
 
-### Pattern 3: Regular Struct (Not Global)
+### Pattern 4: Regular Struct (Not Global)
 ```rust
 struct User { ... }
-let user = User::new(...);  // ✅ Create instances
+let user = User::new(...);  // ✅ Create instances as needed
 ```
 
-**Choose the simplest approach that works for your use case!**
+**Prefer const over static, static over global structs!**
